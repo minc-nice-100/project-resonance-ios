@@ -33,6 +33,17 @@ extension EndpointDiscovery: DNSResolverDelegate {
     }
 
     func dnsResolver(_ resolver: DNSResolver, didFailWithError error: DNSError) {
-        onDiscoveryFailed?(error)
+        // Fallback to basic URL when discovery fails
+        let fallbackConfig = EndpointConfig(
+            version: "fallback",
+            endpoints: EndpointConfig.Endpoints(
+                api: "https://project-resonance.net",
+                ws: "wss://ws.project-resonance.net"
+            ),
+            features: EndpointConfig.Features(localModel: true, voiceSupport: false),
+            model: EndpointConfig.ModelInfo(defaultModel: "resonance-7b", availableModels: ["resonance-7b"])
+        )
+        configurationService.setConfig(fallbackConfig)
+        onEndpointDiscovered?(fallbackConfig)
     }
 }

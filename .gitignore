@@ -47,3 +47,4 @@ Pods/
 *.tmp
 *.temp
 .claude/settings.local.json
+.claude

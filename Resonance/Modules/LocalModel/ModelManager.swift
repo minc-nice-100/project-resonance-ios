@@ -19,6 +19,8 @@ class ModelManager: ObservableObject {
 
     private let fileManager = FileManager.default
     private var downloadTasks: [String: URLSessionDownloadTask] = [:]
+    private var progressObservations: [String: AnyCancellable] = [:]
+    private let tasksQueue = DispatchQueue(label: "com.resonance.modelmanager.tasks")
 
     private var modelsDirectory: URL {
         let paths = fileManager.urls(for: .documentDirectory, in: .userDomainMask)
@@ -78,14 +80,19 @@ class ModelManager: ObservableObject {
     }
 
     func downloadModel(_ model: LocalModel) {
-        guard downloadTasks[model.id] == nil else { return }
+        tasksQueue.sync {
+            guard downloadTasks[model.id] == nil else { return }
+        }
 
         guard let url = URL(string: model.url) else { return }
 
         let task = URLSession.shared.downloadTask(with: url) { [weak self] tempURL, response, error in
             guard let self = self else { return }
 
-            self.downloadTasks.removeValue(forKey: model.id)
+            self.tasksQueue.sync {
+                self.downloadTasks.removeValue(forKey: model.id)
+                self.progressObservations.removeValue(forKey: model.id)
+            }
             self.downloadProgress.removeValue(forKey: model.id)
 
             if let error = error {
@@ -112,7 +119,9 @@ class ModelManager: ObservableObject {
             }
         }
 
-        downloadTasks[model.id] = task
+        tasksQueue.sync {
+            downloadTasks[model.id] = task
+        }
 
         let observation = task.progress.publisher(for: \.fractionCompleted)
             .sink { [weak self] fraction in
@@ -120,6 +129,10 @@ class ModelManager: ObservableObject {
                     self?.downloadProgress[model.id] = Float(fraction)
                 }
             }
+
+        tasksQueue.sync {
+            progressObservations[model.id] = observation
+        }
 
         task.resume()
     }

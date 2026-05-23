@@ -134,8 +134,10 @@ extension LocalModelController: UITableViewDelegate, UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: ModelCell.reuseIdentifier,
-                                                  for: indexPath) as! ModelCell
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: ModelCell.reuseIdentifier,
+                                                      for: indexPath) as? ModelCell else {
+            return UITableViewCell()
+        }
 
         switch indexPath.section {
         case 0:
@@ -359,8 +361,10 @@ extension ChatView: UITableViewDelegate, UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: ChatMessageCell.reuseIdentifier,
-                                                  for: indexPath) as! ChatMessageCell
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: ChatMessageCell.reuseIdentifier,
+                                                      for: indexPath) as? ChatMessageCell else {
+            return UITableViewCell()
+        }
         cell.configure(with: messages[indexPath.row])
         return cell
     }

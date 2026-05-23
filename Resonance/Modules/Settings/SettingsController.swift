@@ -83,8 +83,10 @@ class SettingsController: UITableViewController {
     private func configureDNSCell(for indexPath: IndexPath) -> UITableViewCell {
         switch indexPath.row {
         case 0:
-            let cell = tableView.dequeueReusableCell(withIdentifier: SwitchCell.reuseIdentifier,
-                                                    for: indexPath) as! SwitchCell
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: SwitchCell.reuseIdentifier,
+                                                    for: indexPath) as? SwitchCell else {
+                return UITableViewCell()
+            }
             cell.configure(title: "DNSSEC Validation",
                          isOn: viewModel.settings.enableDNSSEC) { [weak self] isOn in
                 self?.viewModel.setDNSSEC(enabled: isOn)
@@ -112,8 +114,10 @@ class SettingsController: UITableViewController {
     private func configureNetworkCell(for indexPath: IndexPath) -> UITableViewCell {
         switch indexPath.row {
         case 0:
-            let cell = tableView.dequeueReusableCell(withIdentifier: SwitchCell.reuseIdentifier,
-                                                    for: indexPath) as! SwitchCell
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: SwitchCell.reuseIdentifier,
+                                                    for: indexPath) as? SwitchCell else {
+                return UITableViewCell()
+            }
             cell.configure(title: "Auto Discovery",
                          isOn: viewModel.settings.autoDiscovery) { [weak self] isOn in
                 self?.viewModel.setAutoDiscovery(enabled: isOn)

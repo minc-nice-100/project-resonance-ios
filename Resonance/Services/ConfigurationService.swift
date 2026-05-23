@@ -6,6 +6,7 @@ class ConfigurationService {
     private var config: EndpointConfig?
     private let userDefaults = UserDefaults.standard
     private let configKey = "endpoint_config"
+    private let configQueue = DispatchQueue(label: "com.resonance.configservice")
 
     private init() {
         loadCachedConfig()
@@ -19,7 +20,9 @@ class ConfigurationService {
     }
 
     func setConfig(_ config: EndpointConfig) {
-        self.config = config
+        configQueue.sync {
+            self.config = config
+        }
 
         if let data = try? JSONEncoder().encode(config) {
             userDefaults.set(data, forKey: configKey)
@@ -27,7 +30,7 @@ class ConfigurationService {
     }
 
     func getConfig() -> [String: Any] {
-        guard let config = config else {
+        guard let config = configQueue.sync(execute: { self.config }) else {
             return [:]
         }
 
@@ -43,18 +46,18 @@ class ConfigurationService {
     }
 
     func getAPIEndpoint() -> String {
-        return config?.endpoints.api ?? "https://project-resonance.net"
+        return configQueue.sync { config?.endpoints.api ?? "https://project-resonance.net" } ?? "https://project-resonance.net"
     }
 
     func getWSEndpoint() -> String {
-        return config?.endpoints.ws ?? "wss://ws.project-resonance.net"
+        return configQueue.sync { config?.endpoints.ws ?? "wss://ws.project-resonance.net" } ?? "wss://ws.project-resonance.net"
     }
 
     func isLocalModelEnabled() -> Bool {
-        return config?.features.localModel ?? true
+        return configQueue.sync { config?.features.localModel ?? true } ?? true
     }
 
     func getDefaultModel() -> String {
-        return config?.model.defaultModel ?? "resonance-7b"
+        return configQueue.sync { config?.model.defaultModel ?? "resonance-7b" } ?? "resonance-7b"
     }
 }

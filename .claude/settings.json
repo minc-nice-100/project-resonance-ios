@@ -33,7 +33,20 @@
       "Bash(git init *)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git checkout *)",
+      "Bash(git config *)",
+      "Bash(mkdir -p \"g:\\\\Windows\\\\User\\\\WU\\\\Desktop\\\\project-resonance-ios\\\\.claude\\\\skills\")",
+      "Bash(python \"g:\\\\Windows\\\\User\\\\WU\\\\Desktop\\\\project-resonance-ios\\\\.claude\\\\skills\\\\claude-chat.py\" list)",
+      "Bash(git remote *)",
+      "Bash(git fetch *)",
+      "Bash(gh pr *)",
+      "Bash(git push *)",
+      "Bash(git merge *)",
+      "Bash(git stash *)"
+    ],
+    "additionalDirectories": [
+      "g:\\Windows\\User\\WU\\Desktop\\project-resonance-ios\\.claude"
     ]
   }
 }

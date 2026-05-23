@@ -43,7 +43,9 @@
       "Bash(gh pr *)",
       "Bash(git push *)",
       "Bash(git merge *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(git rev-list *)",
+      "Bash(git reset *)"
     ],
     "additionalDirectories": [
       "g:\\Windows\\User\\WU\\Desktop\\project-resonance-ios\\.claude"

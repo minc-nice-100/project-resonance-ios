@@ -46,3 +46,4 @@ Pods/
 # Temporary files
 *.tmp
 *.temp
+.claude/settings.json

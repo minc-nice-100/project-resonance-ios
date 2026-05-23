@@ -65,7 +65,7 @@
                 <string>resonance</string>
             </array>
             <key>CFBundleURLName</key>
-            <string>net.projectresonance.app</string>
+            <string>app.lovable.projectresonance</string>
         </dict>
     </array>
 </dict>

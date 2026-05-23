@@ -1,6 +1,6 @@
 name: Resonance
 options:
-  bundleIdPrefix: net.projectresonance
+  bundleIdPrefix: app.lovable.projectresonance
   deploymentTarget:
     iOS: "15.0"
   xcodeVersion: "15.0"
@@ -25,7 +25,7 @@ targets:
           - "**/.DS_Store"
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: net.projectresonance.app
+        PRODUCT_BUNDLE_IDENTIFIER: app.lovable.projectresonance
         INFOPLIST_FILE: Resonance/App/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: false

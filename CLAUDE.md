@@ -4,7 +4,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Resonance is an iOS app with WebView-based UI loading project-resonance.net, featuring intelligent DNS resolution for backend service discovery and local LLM model execution capability.
+This is the iOS companion app for [project-resonance](https://github.com/minc-nice-100/project-resonance).
+
+- **Bundle ID**: `app.lovable.projectresonance`
+- **Platform**: iOS 15.0+
+- **Framework**: UIKit with WKWebView
+
+## Relationship with Main Project
+
+The iOS app is designed to work alongside the main project-resonance monorepo:
+
+```
+project-resonance/
+├── frontend/          # Capacitor React app (web + mobile)
+├── worker/           # Cloudflare Workers API
+│   └── src/
+│       ├── handlers/  # API handlers (audio, asr, tts, logs, corpus)
+│       └── services/ # COSYVOICE, WHISPER, MINIO VPC services
+└── server/           # Go backend
+```
+
+### API Endpoints (from worker)
+- `POST /api/audio/upload` - Audio file upload
+- `POST /api/asr/jobs` - ASR job submission
+- `POST /api/tts/jobs` - TTS job submission
+- `POST /api/tts/voice-clone` - Voice cloning
+- `GET /api/health` - Health check
+
+### WebView Target
+The WebView loads the frontend from the Capacitor build (`frontend/dist`), which is served via Cloudflare Workers.
 
 ## Build Commands
 
@@ -16,10 +44,9 @@ xcodegen generate
 xcodebuild -project Resonance.xcodeproj -scheme Resonance -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 15' build
 ```
 
-### Swift Package Build
-```bash
-swift build
-```
+### GitHub Actions CI/CD
+- **CI**: Pushes to `master`/`release` trigger automatic build
+- **Release**: Manual workflow dispatch for IPA generation
 
 ## Architecture
 
@@ -49,7 +76,7 @@ swift build
 - **EndpointDiscovery.swift**: DNS-based service discovery coordinator
 
 ## Key Files
-- `project.yml`: XcodeGen configuration (not usable on Windows)
+- `project.yml`: XcodeGen configuration
 - `SPEC.md`: Full project specification
 - `Resonance/App/AppDelegate.swift`: App entry point
 - `Resonance/App/SceneDelegate.swift`: Scene management and tab bar setup
@@ -58,3 +85,6 @@ swift build
 - DnsKit: DNS resolution utilities
 - KeychainAccess: Secure storage
 - SnapKit: Auto Layout DSL
+
+##姊妹项目
+- [project-resonance](https://github.com/minc-nice-100/project-resonance) - 主项目(前端+Worker API+Go后端)

@@ -264,9 +264,3 @@ class RegionDetector {
         return domesticRegions.contains(regionCode)
     }
 }
-
-class DNSSECValidator {
-    func validate(data: String) -> Bool {
-        return true
-    }
-}

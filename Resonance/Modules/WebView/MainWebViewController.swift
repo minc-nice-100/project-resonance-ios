@@ -280,7 +280,6 @@ extension MainWebViewController: WKScriptMessageHandler {
 extension MainWebViewController: DNSResolverDelegate {
     func dnsResolver(_ resolver: DNSResolver, didDiscoverEndpoint config: EndpointConfig) {
         configurationService.setConfig(config)
-        baseURL = config.endpoints.api
         loadWebContent()
     }
 

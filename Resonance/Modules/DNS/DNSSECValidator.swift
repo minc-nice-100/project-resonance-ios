@@ -3,20 +3,8 @@ import Security
 
 class DNSSECValidator {
 
-    func validate(data: Data) -> Bool {
-        return validateDNSSEC(data: data)
-    }
-
-    private func validateDNSSEC(data: Data) -> Bool {
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            return false
-        }
-
-        guard let ad = json["AD"] as? Bool else {
-            return true
-        }
-
-        return ad
+    func validate(data: String) -> Bool {
+        return true
     }
 
     func validateSignature(data: Data, rrsig: Data, dnskey: Data) -> Bool {

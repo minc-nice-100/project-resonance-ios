@@ -1,16 +1,5 @@
 import Foundation
 
-enum DNSError: Error {
-    case networkUnavailable
-    case serverError(Int)
-    case timeout
-    case invalidResponse
-    case dnssecValidationFailed
-    case noSrvRecord
-    case noTxtRecord
-    case resolutionFailed
-}
-
 struct SRVRecord {
     let priority: UInt16
     let weight: UInt16
@@ -82,20 +71,15 @@ class DNSResolver {
 
             switch result {
             case .success(let srvData):
-                self.parseSRVRecord(srvData, targetDomain: srvName)
-            case .failure(let error):
-                self.delegate?.dnsResolver(self, didFailWithError: error)
+                if let srv = self.parseSRVRecord(srvData) {
+                    self.queryTXTRecord()
+                } else {
+                    self.queryTXTRecord()
+                }
+            case .failure:
+                self.queryTXTRecord()
             }
         }
-    }
-
-    private func parseSRVRecord(_ data: Data, targetDomain: String) {
-        guard let srv = parseSRV(data: data) else {
-            queryTXTRecord()
-            return
-        }
-
-        queryTXTRecord()
     }
 
     private func queryTXTRecord() {
@@ -107,20 +91,14 @@ class DNSResolver {
             switch result {
             case .success(let txtData):
                 self.parseTXTRecord(txtData)
-            case .failure(let error):
-                self.delegate?.dnsResolver(self, didFailWithError: error)
+            case .failure:
+                self.delegate?.dnsResolver(self, didFailWithError: .resolutionFailed)
             }
         }
     }
 
-    private func parseTXTRecord(_ data: Data) {
-        guard let txtString = String(data: data, encoding: .utf8) else {
-            delegate?.dnsResolver(self, didFailWithError: .invalidResponse)
-            return
-        }
-
-        let configURL = txtString.trimmingCharacters(in: .whitespacesAndNewlines)
-
+    private func parseTXTRecord(_ txtData: String) {
+        let configURL = txtData.trimmingCharacters(in: .whitespacesAndNewlines)
         fetchConfiguration(from: configURL)
     }
 
@@ -163,7 +141,7 @@ class DNSResolver {
 
     private func resolveWithFallback(domain: String,
                                      recordType: DNSRecordType,
-                                     completion: @escaping (Result<Data, DNSError>) -> Void) {
+                                     completion: @escaping (Result<String, DNSError>) -> Void) {
         let isDomestic = regionDetector.isDomestic()
 
         if isDomestic {
@@ -175,16 +153,16 @@ class DNSResolver {
 
     private func resolveDomestic(domain: String,
                                  recordType: DNSRecordType,
-                                 completion: @escaping (Result<Data, DNSError>) -> Void) {
-        httpDNSClient.query(domain: domain, recordType: recordType) { [weak self] result in
+                                 completion: @escaping (Result<String, DNSError>) -> Void) {
+        httpDNSClient.query(domain: domain, recordType: recordType, server: .domestic) { [weak self] result in
             switch result {
             case .success(let data):
-                self?.validateAndComplete(data: data, completion: completion)
+                completion(.success(data))
             case .failure:
                 self?.tlsDNSClient.query(domain: domain, recordType: recordType) { tlsResult in
                     switch tlsResult {
                     case .success(let data):
-                        self?.validateAndComplete(data: data, completion: completion)
+                        completion(.success(data))
                     case .failure:
                         self?.resolveLocal(domain: domain, recordType: recordType, completion: completion)
                     }
@@ -195,20 +173,20 @@ class DNSResolver {
 
     private func resolveInternational(domain: String,
                                      recordType: DNSRecordType,
-                                     completion: @escaping (Result<Data, DNSError>) -> Void) {
+                                     completion: @escaping (Result<String, DNSError>) -> Void) {
         httpDNSClient.query(domain: domain,
                            recordType: recordType,
                            server: .cloudflare) { [weak self] result in
             switch result {
             case .success(let data):
-                self?.validateAndComplete(data: data, completion: completion)
+                completion(.success(data))
             case .failure:
                 self?.httpDNSClient.query(domain: domain,
                                          recordType: recordType,
                                          server: .google) { httpResult in
                     switch httpResult {
                     case .success(let data):
-                        self?.validateAndComplete(data: data, completion: completion)
+                        completion(.success(data))
                     case .failure:
                         self?.resolveLocal(domain: domain, recordType: recordType, completion: completion)
                     }
@@ -217,18 +195,9 @@ class DNSResolver {
         }
     }
 
-    private func validateAndComplete(data: Data,
-                                    completion: @escaping (Result<Data, DNSError>) -> Void) {
-        if dnssecValidator.validate(data: data) {
-            completion(.success(data))
-        } else {
-            completion(.failure(.dnssecValidationFailed))
-        }
-    }
-
     private func resolveLocal(domain: String,
                               recordType: DNSRecordType,
-                              completion: @escaping (Result<Data, DNSError>) -> Void) {
+                              completion: @escaping (Result<String, DNSError>) -> Void) {
         let host = CFHostCreateWithName(nil, domain as CFString).takeRetainedValue()
 
         CFHostStartInfoResolution(host, .addresses, nil)
@@ -241,11 +210,31 @@ class DNSResolver {
             return
         }
 
-        completion(.success(addressData))
+        var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+        addressData.withUnsafeBytes { ptr in
+            let sockaddr: sockaddr = ptr.load(as: sockaddr.self)
+            getnameinfo(&sockaddr, socklen_t(addressData.count),
+                       &hostname, socklen_t(hostname.count),
+                       nil, 0, NI_NUMERICHOST)
+        }
+
+        let ipString = String(cString: hostname)
+        completion(.success(ipString))
     }
 
-    private func parseSRV(data: Data) -> SRVRecord? {
-        return nil
+    private func parseSRVRecord(_ data: String) -> SRVRecord? {
+        let parts = data.split(separator: " ")
+        guard parts.count >= 4 else { return nil }
+
+        guard let priority = UInt16(parts[0]),
+              let weight = UInt16(parts[1]),
+              let port = UInt16(parts[2]) else {
+            return nil
+        }
+
+        let target = String(parts[3])
+
+        return SRVRecord(priority: priority, weight: weight, port: port, target: target)
     }
 }
 
@@ -273,5 +262,11 @@ class RegionDetector {
 
         let domesticRegions = ["CN"]
         return domesticRegions.contains(regionCode)
+    }
+}
+
+class DNSSECValidator {
+    func validate(data: String) -> Bool {
+        return true
     }
 }

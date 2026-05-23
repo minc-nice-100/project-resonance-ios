@@ -14,7 +14,7 @@ class TLSDNSClient {
 
     func query(domain: String,
                recordType: DNSRecordType,
-               completion: @escaping (Result<Data, DNSError>) -> Void) {
+               completion: @escaping (Result<String, DNSError>) -> Void) {
         guard let url = buildURL(domain: domain, recordType: recordType) else {
             completion(.failure(.invalidResponse))
             return
@@ -22,7 +22,6 @@ class TLSDNSClient {
 
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        request.setValue("application/dns-message", forHTTPHeaderField: "Accept")
         request.setValue("application/dns-json", forHTTPHeaderField: "Accept")
 
         let task = session.dataTask(with: request) { data, response, error in
@@ -50,7 +49,19 @@ class TLSDNSClient {
                 return
             }
 
-            completion(.success(data))
+            do {
+                let dohResponse = try JSONDecoder().decode(DoHResponse.self, from: data)
+
+                guard dohResponse.Status == 0, let answers = dohResponse.Answer, !answers.isEmpty else {
+                    completion(.failure(.resolutionFailed))
+                    return
+                }
+
+                let recordData = answers.map { $0.data }.joined(separator: " ")
+                completion(.success(recordData))
+            } catch {
+                completion(.failure(.invalidResponse))
+            }
         }
         task.resume()
     }

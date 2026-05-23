@@ -1,5 +1,17 @@
 import Foundation
 
+struct DoHResponse: Codable {
+    let Status: Int
+    let Answer: [DoHAnswer]?
+}
+
+struct DoHAnswer: Codable {
+    let name: String
+    let type: Int
+    let TTL: Int
+    let data: String
+}
+
 enum DNSRecordType: String {
     case srv = "SRV"
     case txt = "TXT"
@@ -24,6 +36,17 @@ enum DnsServer {
     }
 }
 
+enum DNSError: Error {
+    case networkUnavailable
+    case serverError(Int)
+    case timeout
+    case invalidResponse
+    case dnssecValidationFailed
+    case noSrvRecord
+    case noTxtRecord
+    case resolutionFailed
+}
+
 class HTTPDNSClient {
     private let session: URLSession
     private let timeout: TimeInterval = 10
@@ -38,7 +61,7 @@ class HTTPDNSClient {
     func query(domain: String,
                recordType: DNSRecordType,
                server: DnsServer = .domestic,
-               completion: @escaping (Result<Data, DNSError>) -> Void) {
+               completion: @escaping (Result<String, DNSError>) -> Void) {
         guard let url = buildURL(domain: domain, recordType: recordType, server: server) else {
             completion(.failure(.invalidResponse))
             return
@@ -73,7 +96,19 @@ class HTTPDNSClient {
                 return
             }
 
-            completion(.success(data))
+            do {
+                let dohResponse = try JSONDecoder().decode(DoHResponse.self, from: data)
+
+                guard dohResponse.Status == 0, let answers = dohResponse.Answer, !answers.isEmpty else {
+                    completion(.failure(.resolutionFailed))
+                    return
+                }
+
+                let recordData = answers.map { $0.data }.joined(separator: " ")
+                completion(.success(recordData))
+            } catch {
+                completion(.failure(.invalidResponse))
+            }
         }
         task.resume()
     }

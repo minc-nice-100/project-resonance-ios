@@ -83,14 +83,16 @@ class ChatViewModel: ObservableObject {
         Thread.sleep(forTimeInterval: 1.0)
 
         let truncatedPrompt = String(prompt.prefix(100))
+        let modelName = currentModel?.name ?? "Unknown"
+        let modelSize = currentModel?.size ?? 0
 
         return """
         This is a simulated response from the local model.
 
         You sent: "\(truncatedPrompt)..."
 
-        Model: \(model.name)
-        Model size: \(model.size / 1_000_000_000)GB
+        Model: \(modelName)
+        Model size: \(modelSize / 1_000_000_000)GB
 
         Note: Actual local inference would require integrating with CoreML,
         Metal Performance Shaders, or a WASM-based runtime like Transformers.js.

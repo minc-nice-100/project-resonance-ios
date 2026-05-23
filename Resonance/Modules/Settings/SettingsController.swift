@@ -94,7 +94,7 @@ class SettingsController: UITableViewController {
         case 1:
             let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
             cell.textLabel?.text = "DNS Server"
-            cell.detailTextLabel?.text = viewModel.settings.dnsServer.rawValue
+            cell.detailTextLabel?.text = viewModel.settings.dnsServer
             cell.accessoryType = .disclosureIndicator
             return cell
 
@@ -213,6 +213,12 @@ class SettingsController: UITableViewController {
         }
 
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+        if let popover = alert.popoverPresentationController {
+            popover.sourceView = view
+            popover.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+        }
 
         present(alert, animated: true)
     }

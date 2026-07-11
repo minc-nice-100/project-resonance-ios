@@ -4,16 +4,17 @@ class ConfigurationService {
     static let shared = ConfigurationService()
 
     private var config: EndpointConfig?
-    private let userDefaults = UserDefaults.standard
+    private let storage: KeyValueStorage
     private let configKey = "endpoint_config"
     private let configQueue = DispatchQueue(label: "com.resonance.configservice")
 
-    private init() {
+    init(storage: KeyValueStorage = UserDefaultsStorage()) {
+        self.storage = storage
         loadCachedConfig()
     }
 
     private func loadCachedConfig() {
-        if let data = userDefaults.data(forKey: configKey),
+        if let data = storage.data(forKey: configKey),
            let cached = try? JSONDecoder().decode(EndpointConfig.self, from: data) {
             self.config = cached
         }
@@ -25,7 +26,7 @@ class ConfigurationService {
         }
 
         if let data = try? JSONEncoder().encode(config) {
-            userDefaults.set(data, forKey: configKey)
+            storage.set(data, forKey: configKey)
         }
     }
 

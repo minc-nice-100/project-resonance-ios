@@ -47,11 +47,19 @@ enum DNSError: Error {
     case resolutionFailed
 }
 
-class HTTPDNSClient {
-    private let session: URLSession
-    private let timeout: TimeInterval = 10
+protocol DNSProvider {
+    func query(domain: String,
+               recordType: DNSRecordType,
+               server: DnsServer,
+               completion: @escaping (Result<String, DNSError>) -> Void)
+}
 
-    init() {
+class HTTPDNSClient: DNSProvider {
+    private let session: URLSession
+    private let timeout: TimeInterval
+
+    init(timeout: TimeInterval = 10) {
+        self.timeout = timeout
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = timeout
         config.timeoutIntervalForResource = timeout * 2

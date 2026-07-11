@@ -9,13 +9,16 @@ struct LocalModel: Identifiable, Codable {
     let url: String
 }
 
-class ModelManager: ObservableObject {
+class ModelManager: ObservableObject, ModelStore {
     static let shared = ModelManager()
 
     @Published var availableModels: [LocalModel] = []
     @Published var downloadedModels: [LocalModel] = []
     @Published var downloadProgress: [String: Float] = [:]
     @Published var currentModel: LocalModel?
+
+    var availableModelsPublisher: AnyPublisher<[LocalModel], Never> { $availableModels.eraseToAnyPublisher() }
+    var downloadedModelsPublisher: AnyPublisher<[LocalModel], Never> { $downloadedModels.eraseToAnyPublisher() }
 
     private let fileManager = FileManager.default
     private var downloadTasks: [String: URLSessionDownloadTask] = [:]

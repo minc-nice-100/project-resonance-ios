@@ -15,14 +15,18 @@ struct ChatMessage: Identifiable {
     }
 }
 
-class ChatViewModel: ObservableObject {
+class ChatViewModel: ObservableObject, ChatEngine {
     @Published var messages: [ChatMessage] = []
     @Published var isLoading = false
     @Published var currentModel: LocalModel?
 
-    private let modelManager = ModelManager.shared
+    var messagesPublisher: AnyPublisher<[ChatMessage], Never> { $messages.eraseToAnyPublisher() }
+    var isLoadingPublisher: AnyPublisher<Bool, Never> { $isLoading.eraseToAnyPublisher() }
 
-    init() {
+    private let modelStore: ModelStore
+
+    init(modelStore: ModelStore = ModelManager.shared) {
+        self.modelStore = modelStore
         setupDefaultMessages()
     }
 
@@ -67,7 +71,7 @@ class ChatViewModel: ObservableObject {
     }
 
     private func runInference(prompt: String, model: LocalModel) -> String {
-        guard let modelURL = modelManager.getModelURL(model.id) else {
+        guard let modelURL = modelStore.getModelURL(model.id) else {
             return "Model file not found. Please download it again."
         }
 

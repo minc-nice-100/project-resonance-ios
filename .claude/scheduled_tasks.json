@@ -1,14 +1,3 @@
 {
-  "tasks": [
-    {
-      "id": "247446a4",
-      "cron": "*/5 * * * *",
-      "prompt": "Review all Swift code in g:/Windows/User/WU/Desktop/project-resonance-ios for:\n1. Compilation/syntax errors\n2. Memory leaks or resource management issues\n3. Force unwraps or implicitly unwrapped optionals that could crash\n4. Missing delegate/dataSource implementations\n5. iPad-specific issues (actionSheet without popoverPresentationController)\n6. Thread safety issues\n7. Hardcoded values that should be configurable\n8. API consistency issues\n\nFocus on:\n- Resonance/Modules/DNS/\n- Resonance/Modules/WebView/\n- Resonance/Modules/LocalModel/\n- Resonance/Modules/Settings/\n- Resonance/Services/\n\nIf critical issues found, write to C:/claude-chat/project-resonance-ios/inbox/review_latest.json with format:\n{\"timestamp\": \"<ISO date>\", \"instance\": \"project-resonance-ios\", \"hasIssues\": true, \"findings\": [{\"severity\": \"critical|warning\", \"file\": \"...\", \"issue\": \"...\"}]}\n\nIf no critical issues, write:\n{\"timestamp\": \"<ISO date>\", \"instance\": \"project-resonance-ios\", \"hasIssues\": false, \"findings\": []}",
-      "createdAt": 1779524698710,
-      "recurring": true,
-      "createdBySessionId": "d6e2fb83-421a-4a62-ace9-4415335bf225",
-      "createdByPid": 11500,
-      "createdByProcStart": "639151433303824200"
-    }
-  ]
+  "tasks": []
 }

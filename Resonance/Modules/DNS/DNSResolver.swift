@@ -37,19 +37,18 @@ protocol DNSResolverDelegate: AnyObject {
 class DNSResolver {
     weak var delegate: DNSResolverDelegate?
 
-    private let httpDNSClient: HTTPDNSClient
-    private let tlsDNSClient: TLSDNSClient
-    private let dnssecValidator: DNSSECValidator
+    private let primaryProvider: DNSProvider
+    private let fallbackProvider: DNSProvider
     private let regionDetector: RegionDetector
     private let cache: DNSCache
 
     private let baseDomain = "project-resonance.net"
     private let srvService = "_resonance._tcp"
 
-    init() {
-        self.httpDNSClient = HTTPDNSClient()
-        self.tlsDNSClient = TLSDNSClient()
-        self.dnssecValidator = DNSSECValidator()
+    init(primaryProvider: DNSProvider = HTTPDNSClient(),
+         fallbackProvider: DNSProvider = HTTPDNSClient(timeout: 15)) {
+        self.primaryProvider = primaryProvider
+        self.fallbackProvider = fallbackProvider
         self.regionDetector = RegionDetector()
         self.cache = DNSCache()
     }
@@ -154,12 +153,12 @@ class DNSResolver {
     private func resolveDomestic(domain: String,
                                  recordType: DNSRecordType,
                                  completion: @escaping (Result<String, DNSError>) -> Void) {
-        httpDNSClient.query(domain: domain, recordType: recordType, server: .domestic) { [weak self] result in
+        primaryProvider.query(domain: domain, recordType: recordType, server: .domestic) { [weak self] result in
             switch result {
             case .success(let data):
                 completion(.success(data))
             case .failure:
-                self?.tlsDNSClient.query(domain: domain, recordType: recordType) { tlsResult in
+                self?.fallbackProvider.query(domain: domain, recordType: recordType, server: .google) { tlsResult in
                     switch tlsResult {
                     case .success(let data):
                         completion(.success(data))
@@ -174,14 +173,14 @@ class DNSResolver {
     private func resolveInternational(domain: String,
                                      recordType: DNSRecordType,
                                      completion: @escaping (Result<String, DNSError>) -> Void) {
-        httpDNSClient.query(domain: domain,
+        primaryProvider.query(domain: domain,
                            recordType: recordType,
                            server: .cloudflare) { [weak self] result in
             switch result {
             case .success(let data):
                 completion(.success(data))
             case .failure:
-                self?.httpDNSClient.query(domain: domain,
+                self?.primaryProvider.query(domain: domain,
                                          recordType: recordType,
                                          server: .google) { httpResult in
                     switch httpResult {

@@ -7,10 +7,23 @@ class LocalModelController: UIViewController {
     private let chatView = ChatView()
     private var cancellables = Set<AnyCancellable>()
 
-    private let modelManager = ModelManager.shared
-    private let viewModel = ChatViewModel()
+    private let modelManager: ModelStore
+    private let viewModel: ChatEngine
 
     private var isChatMode = false
+
+    init(modelManager: ModelStore = ModelManager.shared,
+         chatEngine: ChatEngine = ChatViewModel()) {
+        self.modelManager = modelManager
+        self.viewModel = chatEngine
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        self.modelManager = ModelManager.shared
+        self.viewModel = ChatViewModel()
+        super.init(coder: coder)
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -66,28 +79,28 @@ class LocalModelController: UIViewController {
     }
 
     private func setupBindings() {
-        modelManager.$availableModels
+        modelManager.availableModelsPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.tableView.reloadData()
             }
             .store(in: &cancellables)
 
-        modelManager.$downloadedModels
+        modelManager.downloadedModelsPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.tableView.reloadData()
             }
             .store(in: &cancellables)
 
-        viewModel.$messages
+        viewModel.messagesPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] messages in
                 self?.chatView.updateMessages(messages)
             }
             .store(in: &cancellables)
 
-        viewModel.$isLoading
+        viewModel.isLoadingPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isLoading in
                 self?.chatView.setLoading(isLoading)

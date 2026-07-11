@@ -25,7 +25,7 @@ struct AppSettings: Codable {
 class SettingsViewModel: ObservableObject {
     @Published var settings: AppSettings
 
-    private let userDefaults = UserDefaults.standard
+    private let storage: KeyValueStorage
     private let settingsKey = "app_settings"
 
     var appVersion: String {
@@ -34,8 +34,9 @@ class SettingsViewModel: ObservableObject {
         return "\(version) (\(build))"
     }
 
-    init() {
-        if let data = userDefaults.data(forKey: settingsKey),
+    init(storage: KeyValueStorage = UserDefaultsStorage()) {
+        self.storage = storage
+        if let data = storage.data(forKey: settingsKey),
            let savedSettings = try? JSONDecoder().decode(AppSettings.self, from: data) {
             self.settings = savedSettings
         } else {
@@ -74,7 +75,7 @@ class SettingsViewModel: ObservableObject {
 
     private func saveSettings() {
         if let data = try? JSONEncoder().encode(settings) {
-            userDefaults.set(data, forKey: settingsKey)
+            storage.set(data, forKey: settingsKey)
         }
     }
 }
